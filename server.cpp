@@ -208,7 +208,7 @@ int main(int argc, char* argv[])
             perror("select failed - closing down\n");
             finished = true;
         } else {
-            // Accept  any new connections to the server
+            // Accept any new connections to the server
             if (FD_ISSET(listenSock, &readSockets)) {
                 clientSock = accept(listenSock, (struct sockaddr *)&client, &clientLen);
 
