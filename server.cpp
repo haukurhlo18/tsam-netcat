@@ -71,31 +71,27 @@ int open_socket(int portno)
     // so we have to use a fcntl (file control) command there instead.
 
 #ifndef SOCK_NONBLOCK
-    if((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
-    {
+    if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
         perror("Failed to open socket");
         return(-1);
     }
 
     int flags = fcntl(sock, F_GETFL, 0);
 
-    if(fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0)
-    {
+    if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0) {
         perror("Failed to set O_NONBLOCK");
     }
 #else
-    if((sock = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK , IPPROTO_TCP)) < 0)
-      {
-         perror("Failed to open socket");
-         return(-1);
-      }
+    if ((sock = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK , IPPROTO_TCP)) < 0) {
+        perror("Failed to open socket");
+        return(-1);
+    }
 #endif
 
     // Turn on SO_REUSEADDR to allow socket to be quickly reused after
     // program exit.
 
-    if(setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &set, sizeof(set)) < 0)
-    {
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &set, sizeof(set)) < 0) {
         perror("Failed to set SO_REUSEADDR:");
     }
 
@@ -110,13 +106,10 @@ int open_socket(int portno)
 
     // Bind to socket to listen for connections from clients
 
-    if(bind(sock, (struct sockaddr *)&sk_addr, sizeof(sk_addr)) < 0)
-    {
+    if (bind(sock, (struct sockaddr *)&sk_addr, sizeof(sk_addr)) < 0) {
         perror("Failed to bind to socket:");
         return(-1);
-    }
-    else
-    {
+    } else {
         return(sock);
     }
 }
@@ -132,10 +125,8 @@ void closeClient(int clientSocket, fd_set *openSockets, int *maxfds)
     // one has to be determined. Socket fd's can be reused by the Kernel,
     // so there aren't any nice ways to do this.
 
-    if(*maxfds == clientSocket)
-    {
-        for(auto const& p : clients)
-        {
+    if (*maxfds == clientSocket) {
+        for (auto const& p : clients) {
             *maxfds = std::max(*maxfds, p.second->sock);
         }
     }
@@ -147,8 +138,7 @@ void closeClient(int clientSocket, fd_set *openSockets, int *maxfds)
 
 // Process any message received from client on the server
 
-void clientCommand(int clientSocket, fd_set *openSockets, int *maxfds,
-                   char *buffer)
+void clientCommand(int clientSocket, fd_set *openSockets, int *maxfds, char *buffer)
 {
     std::vector<std::string> tokens;     // List of tokens in command from client
     std::string token;                   // individual token being parsed
@@ -157,16 +147,14 @@ void clientCommand(int clientSocket, fd_set *openSockets, int *maxfds,
     std::stringstream stream(buffer);
 
     // By storing them as a vector - tokens[0] is first word in string
-    while(stream >> token)
+    while (stream >> token) {
         tokens.push_back(token);
+    }
 
     // This assumes that the supplied command has no parameters
-    if((tokens[0].compare("SYS") == 0) && (tokens.size() >= 2))
-    {
+    if ((tokens[0].compare("SYS") == 0) && (tokens.size() >= 2)) {
         system(tokens[1].c_str());
-    }
-    else
-    {
+    } else {
         std::cout << "Unknown command from client:" << buffer << std::endl;
     }
 }
@@ -186,8 +174,7 @@ int main(int argc, char* argv[])
     std::vector<int> clientSocketsToClear; // List of closed sockets to remove
 
 
-    if(argc != 2)
-    {
+    if (argc != 2) {
         printf("Usage: server <ip port>\n");
         exit(0);
     }
@@ -197,42 +184,33 @@ int main(int argc, char* argv[])
     listenSock = open_socket(atoi(argv[1]));
 
     printf("Listening on port: %d\n", atoi(argv[1]));
-    printf("       (range of available ports on skel.ru.is is 4000-4100)\n");
+    printf("\t(range of available ports on skel.ru.is is 4000-4100)\n");
 
-    if(listen(listenSock, BACKLOG) < 0)
-    {
+    if (listen(listenSock, BACKLOG) < 0) {
         printf("Listen failed on port %s\n", argv[1]);
         exit(0);
-    }
-    else
+    } else {
         // Add the listen socket to socket set
-    {
         FD_SET(listenSock, &openSockets);
         maxfds = listenSock;
     }
 
     finished = false;
 
-    while(!finished)
-    {
+    while (!finished) {
         // Get modifiable copy of readSockets
         readSockets = exceptSockets = openSockets;
         memset(buffer, 0, sizeof(buffer));
 
         int n = select(maxfds + 1, &readSockets, NULL, &exceptSockets, NULL);
 
-        if(n < 0)
-        {
+        if (n < 0) {
             perror("select failed - closing down\n");
             finished = true;
-        }
-        else
-        {
+        } else {
             // Accept  any new connections to the server
-            if(FD_ISSET(listenSock, &readSockets))
-            {
-                clientSock = accept(listenSock, (struct sockaddr *)&client,
-                                    &clientLen);
+            if (FD_ISSET(listenSock, &readSockets)) {
+                clientSock = accept(listenSock, (struct sockaddr *)&client, &clientLen);
 
                 FD_SET(clientSock, &openSockets);
                 maxfds = std::max(maxfds, clientSock);
@@ -243,24 +221,18 @@ int main(int argc, char* argv[])
                 printf("Client connected on server\n");
             }
             // Check for commands from already connected clients
-            while(n-- > 0)
-            {
-                for(auto const& pair : clients)
-                {
+            while (n-- > 0) {
+                for (auto const& pair : clients) {
                     Client *client = pair.second;
 
-                    if(FD_ISSET(client->sock, &readSockets))
-                    {
-                        if(recv(client->sock, buffer, sizeof(buffer), MSG_DONTWAIT) == 0)
-                        {
+                    if (FD_ISSET(client->sock, &readSockets)) {
+                        if (recv(client->sock, buffer, sizeof(buffer), MSG_DONTWAIT) == 0) {
                             printf("Client closed connection: %d", client->sock);
 
                             closeClient(client->sock, &openSockets, &maxfds);
                             clientSocketsToClear.push_back(client->sock);
 
-                        }
-                        else
-                        {
+                        } else {
                             std::cout << buffer << std::endl;
                             clientCommand(client->sock, &openSockets, &maxfds,
                                           buffer);
@@ -270,8 +242,7 @@ int main(int argc, char* argv[])
 
                 // Remove client from the clients list. This has to be done
                 // out of the main loop, since we can't modify the iterator.
-                for(auto const& i : clientSocketsToClear)
-                {
+                for (auto const& i : clientSocketsToClear) {
                     clients.erase(i);
                 }
             }
