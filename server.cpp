@@ -153,7 +153,24 @@ void clientCommand(int clientSocket, fd_set *openSockets, int *maxfds, char *buf
 
     // This assumes that the supplied command has no parameters
     if ((tokens[0].compare("SYS") == 0) && (tokens.size() >= 2)) {
-        system(tokens[1].c_str());
+        std::string cmd;
+        for (int i = 1; i < tokens.size(); ++i) {
+            cmd.append(tokens[i].c_str());
+            if (i < tokens.size()) {
+                cmd.append(" ");
+            }
+        }
+        // system(tokens[1].c_str());
+        std::string clientStdOut;
+        FILE *tmp = popen(cmd.c_str(), "r");
+        char buffer[1024];
+        while (fgets(buffer, sizeof(buffer), tmp) != NULL) {
+            clientStdOut.append(buffer);
+        }
+        pclose(tmp);
+
+        send(clientSocket, clientStdOut.c_str(), clientStdOut.size(), 0);
+
     } else {
         std::cout << "Unknown command from client:" << buffer << std::endl;
     }
