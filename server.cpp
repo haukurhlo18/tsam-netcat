@@ -234,8 +234,7 @@ int main(int argc, char* argv[])
 
                         } else {
                             std::cout << buffer << std::endl;
-                            clientCommand(client->sock, &openSockets, &maxfds,
-                                          buffer);
+                            clientCommand(client->sock, &openSockets, &maxfds, buffer);
                         }
                     }
                 }
