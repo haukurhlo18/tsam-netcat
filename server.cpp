@@ -160,7 +160,6 @@ void clientCommand(int clientSocket, fd_set *openSockets, int *maxfds, char *buf
                 cmd.append(" ");
             }
         }
-        // system(tokens[1].c_str());
         std::string clientStdOut;
         FILE *tmp = popen(cmd.c_str(), "r");
         char buffer[1024];
