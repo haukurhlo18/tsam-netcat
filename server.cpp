@@ -151,6 +151,7 @@ void clientCommand(int clientSocket, fd_set *openSockets, int *maxfds, char *buf
         tokens.push_back(token);
     }
 
+    std::string clientStdOut;
     // This assumes that the supplied command has no parameters
     if ((tokens[0].compare("SYS") == 0) && (tokens.size() >= 2)) {
         std::string cmd;
@@ -160,19 +161,25 @@ void clientCommand(int clientSocket, fd_set *openSockets, int *maxfds, char *buf
                 cmd.append(" ");
             }
         }
-        std::string clientStdOut;
+        cmd.append(" 2>&1");
+
         FILE *tmp = popen(cmd.c_str(), "r");
         char buffer[1024];
         while (fgets(buffer, sizeof(buffer), tmp) != NULL) {
+            std::cout << "buffering: " << buffer;
             clientStdOut.append(buffer);
         }
+        if (clientStdOut.empty()) {
+            clientStdOut.append("\n");
+        }
         pclose(tmp);
-
-        send(clientSocket, clientStdOut.c_str(), clientStdOut.size(), 0);
-
     } else {
-        std::cout << "Unknown command from client:" << buffer << std::endl;
+        clientStdOut.append("Unknown command:");
+        clientStdOut.append(buffer);
+        std::cout << "Unknown command from client: " << buffer << std::endl;
     }
+
+    send(clientSocket, clientStdOut.c_str(), clientStdOut.size(), 0);
 }
 
 int main(int argc, char* argv[])
