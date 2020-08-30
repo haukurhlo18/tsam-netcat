@@ -68,3 +68,7 @@ Great example commands to run:
 
 Everything this project compiles will be encapsulated within the project root, so after having fun you can just remove 
 the project folder from your computer, which will remove everything.
+
+## github
+
+You can see more on the [github page](https://github.com/haukurhlo18/tsam-netcat).
