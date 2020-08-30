@@ -166,11 +166,7 @@ void clientCommand(int clientSocket, fd_set *openSockets, int *maxfds, char *buf
         FILE *tmp = popen(cmd.c_str(), "r");
         char buffer[1024];
         while (fgets(buffer, sizeof(buffer), tmp) != NULL) {
-            std::cout << "buffering: " << buffer;
             clientStdOut.append(buffer);
-        }
-        if (clientStdOut.empty()) {
-            clientStdOut.append("\n");
         }
         pclose(tmp);
     } else {
