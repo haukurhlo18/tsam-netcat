@@ -98,7 +98,7 @@ protected:
     char buffer[64];
     bzero(buffer, sizeof(buffer));
     while (!this->stop) {
-      re = recv(this->socket, buffer, sizeof(buffer) - 1, MSG_FLUSH);
+      re = recv(this->socket, buffer, sizeof(buffer) - 1, MSG_DONTWAIT);
       if (re < 1 && !this->stop) {
         fprintf(stderr, "Lost connection to server (%s)\n", this->hostname);
         this->close();
